@@ -12,11 +12,11 @@ void setup() {
  Serial.begin(9600);
  Serial.println("Enigma Ready");
  
- /* Initialize outputs 8 to 12
-    Connect five LEDs to outputs D8 - D12
+ /* Initialize outputs 2 to 6
+    Connect five LEDs to outputs D2 - D6
     via 330 Ohm resistors to GND */
     
- for (int i=8; i<=12; i++)
+ for (int i=2; i<=6; i++)
    pinMode(i,OUTPUT);
  
  Serial.print("Enter letter: ");
@@ -77,10 +77,10 @@ void showInt(int c)
     }
   
     /* Display in LEDs 
-       Outputs to D8-D12 */
+       Outputs to D2-D6 */
        
-    for (i = 8; i <= 12; i++)
-      if  (s[i-8] == '0')
+    for (i = 2; i <= 6; i++)
+      if  (s[6-i] == '0')
         digitalWrite(i, LOW);
       else
         digitalWrite(i, HIGH);

@@ -83,7 +83,7 @@ def main():
     themessage=raw_input("Enter message:")
     themessage=themessage.upper()
     print "Encrypting: ",themessage
-    rotor_r = RotorIII("Z")
+    rotor_r = RotorIII("A")
     reflector = Reflector("B")
     crypto = list()
     print "III\tIn\tOut\tPos\tR3-In\tR3-Out\tR3-Pos\tEncryptedLetter"

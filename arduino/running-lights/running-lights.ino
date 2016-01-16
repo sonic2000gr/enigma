@@ -9,16 +9,16 @@
 
 void setup() {
   // put your setup code here, to run once:
-  for (int i=2; i<=6; i++)
+  for (int i=2; i<=9; i++)
     pinMode(i, OUTPUT);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   delay(50);
-  digitalWrite(6, LOW);
+  digitalWrite(9, LOW);
   digitalWrite(2, HIGH);
-  for (int i=3; i<=6; i++) {
+  for (int i=3; i<=9; i++) {
     delay(50);
     digitalWrite(i, HIGH);
     digitalWrite(i-1, LOW);

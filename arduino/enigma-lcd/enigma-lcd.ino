@@ -1,5 +1,5 @@
 /* Nano Enigma 
-   Version 1.1
+   Version 1.2
    With LCD support
    (C) 2015 Manolis Kiagias
    The Enigma Project 
@@ -26,9 +26,25 @@
 
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 
-int rotorIII[] = { 1, 3, 5, 7, 9, 11, 2, 15, 17, 19,
-                   23, 21, 25, 13, 24, 4, 8, 22, 6, 0,
-                   10, 12, 20, 18, 16, 14 };
+int notch[] = {17, 5, 22};
+
+int rotpos[] = { 0, 0, 0 };
+
+int rotor[3][26] =  {
+                     { 4, 10, 12, 5, 11, 6, 3, 16,
+                       21, 25, 13, 19, 14, 22, 24, 7,
+                       23, 20, 18, 15, 0, 8, 1, 17,
+                       2, 9 },
+				 
+		     { 0, 9, 3, 10, 18, 8, 17, 20,
+                       23, 1, 11, 7, 22, 19, 12, 2,
+                       16, 6, 25, 13, 15, 24, 5, 21,
+                       14, 4 },
+
+                     { 1, 3, 5, 7, 9, 11, 2, 15, 17, 19,
+                       23, 21, 25, 13, 24, 4, 8, 22, 6, 0,
+                       10, 12, 20, 18, 16, 14 } };
+
                      
 int reflector[] = { 24, 17, 20, 7, 16, 18, 11,
                     3, 15, 23, 13, 6, 14, 10,
@@ -89,9 +105,13 @@ void loop() {
     Serial.println("Results: ");
     keyboardindex = validateLetter(c);
     if (keyboardindex!=31) {
-      output = encryptRotorIII(keyboardindex);
-      refout=reflect(output);
-      rev=reverseEncryptRotorIII(refout);
+      output = encryptRotor(keyboardindex,2);
+      output = encryptRotor(output,1);
+      output = encryptRotor(output, 0);
+      refout = reflect(output);
+      rev = reverseEncryptRotor(refout,0);
+      rev = reverseEncryptRotor(rev, 1);
+      rev = reverseEncryptRotor(rev,2);
       showInt(rev+1); 
       lcd.print((char)(rev+65)); 
     } else {
@@ -151,37 +171,52 @@ void showInt(int c)
 /* Rotate RotorIII by one position
    Taking care of wrap arounds */
    
-void rotateRotorIII()
+void rotateRotor(int rotorno)
 {
-  /* Store the value of first element */
-  int temp = rotorIII[0];
-  int i;
-  /* Shift elements one up */
-  for (i=0; i<=24; i++)
-    rotorIII[i] = rotorIII[i+1];
-  /* Move first element to bottom */
-  rotorIII[25] = temp;
-  /* Shift the coding one up
-     Wrap around if needed */
-  for (i=0; i<=25; i++) {
-    rotorIII[i] = rotorIII[i] - 1;
-    if (rotorIII[i]<0) 
-       rotorIII[i] = 25;
-  }
+    int i;
+    int temp;
+    
+    /* Keep the top element */
+	
+	temp = rotor[rotorno][0];
+	
+	/* Shift all elements one up */
+	
+    for (i=0; i<=24; i++)
+      rotor[rotorno][i] = rotor[rotorno][i+1];
+	
+	/* Add the first element to the bottom */
+	    
+    rotor[rotorno][25] = temp;
+	
+	/* Reduce the values by 1
+	   Wrap around if necessary  */
+	
+	for (i=0; i<=25; i++) {
+		rotor[rotorno][i] = rotor[rotorno][i] - 1;
+		if (rotor[rotorno][i]< 0) 
+		  rotor[rotorno][i] = 25;
+	}    
+	if (++rotpos[rotorno]==26)
+	  rotpos[rotorno] = 0;
 }
 
-int encryptRotorIII(int keyboardindex) {   
-	
-        /* Since this is the rightmost rotor,
+int encryptRotor(int keyboardindex, int rotorno) {
+
+	/* If this is the rightmost rotor,
 	   rotate before encrypting! */
-	   
-	rotateRotorIII();
+	
+	if (rotorno==2)  {
+	  rotateRotor(rotorno);
+	  printf("Rotor 3 pos: %d\n", rotor[2][0]);
+	  if (rotpos[2] == notch[2])
+	  	 rotateRotor(1);
+	  }
 	
 	/* return output position */
 	
-	return rotorIII[keyboardindex];
+	return rotor[rotorno][keyboardindex];
 }
-
 
 int validateLetter(char letter) 
 {
@@ -207,16 +242,18 @@ int reflect(int index)
 /* Reverse encrypt letter from reflector 
    through RotorIII */
    
-int reverseEncryptRotorIII(int pos)
+int reverseEncryptRotor(int pos, int rotorno)
 {
   int output=0;
   int found=0;
   
   while (output <= 25 && found == 0) {
-  	if (rotorIII[output] == pos) 
+  	if (rotor[rotorno][output] == pos) 
   	   found = 1;
   	else
   	   output++;
-  } 
+  }
   return output;
 }
+
+

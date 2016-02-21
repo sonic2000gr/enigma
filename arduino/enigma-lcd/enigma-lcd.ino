@@ -1,7 +1,7 @@
 /* Nano Enigma 
    Version 1.2
    With LCD support
-   (C) 2015 Manolis Kiagias
+   (C) 2015-2016 Manolis Kiagias
    The Enigma Project 
    Licensed under the BSD license */
 
@@ -22,13 +22,27 @@
 
 /* LED Connections to D2 - D6. D2 is LSB */
 
+#define TRUE 1
+#define FALSE 0
 #include <LiquidCrystal.h>
+
+// LCD pins 
 
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 
+// Notches for rotors 0 (left), 1 (middle), 2 (right)
+
 int notch[] = {17, 5, 22};
 
+// Initial rotor positions
+
 int rotpos[] = { 0, 0, 0 };
+
+// For Double Stepping
+
+int just_rotated = FALSE;
+
+// Rotor tables
 
 int rotor[3][26] =  {
                      { 4, 10, 12, 5, 11, 6, 3, 16,
@@ -45,46 +59,56 @@ int rotor[3][26] =  {
                        23, 21, 25, 13, 24, 4, 8, 22, 6, 0,
                        10, 12, 20, 18, 16, 14 } };
 
+// Type B reflector
                      
 int reflector[] = { 24, 17, 20, 7, 16, 18, 11,
                     3, 15, 23, 13, 6, 14, 10,
                     12, 8, 4, 1, 5, 25, 2, 22,
-                    21, 9, 0, 19};
+                    21, 9, 0, 19 };
 
-void setup() {
+void setup()
+{
+
+  /* Initial rotor positions */
+  /* Enigma can start in any configuration */
  
- /* Initialize serial communications */
+  initRotorPos('A',2);
+  initRotorPos('A',1);
+  initRotorPos('A',0);
+
+  /* Initialize serial communications */
   
- Serial.begin(9600);
+  Serial.begin(9600);
  
- /* Initialize LED outputs */
+  /* Initialize LED outputs */
  
- for (int i=2; i<=6; i++)
-   pinMode(i,OUTPUT);
+  for (int i=2; i<=6; i++)
+    pinMode(i,OUTPUT);
  
- /* Show welcome message */
+  /* Show welcome message */
  
- lcd.begin(16,2);
- lcd.clear();
- lcd.setCursor(0, 0);
- lcd.print("The Enigma");
- lcd.setCursor(0,1); 
- lcd.print("EPAL Kissamou");
- delay(3000);
- lcd.setCursor(0,1);
- lcd.print("(C) 2015-2016");
- delay(3000);
- lcd.clear();
- lcd.setCursor(0,0);
- lcd.print("Enigma Ready");
- lcd.setCursor(0,1);
- lcd.print(">");
- Serial.println("Enigma Ready");
- Serial.print("Enter letter: ");
+  lcd.begin(16,2);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("The Enigma");
+  lcd.setCursor(0,1); 
+  lcd.print("EPAL Kissamou");
+  delay(3000);
+  lcd.setCursor(0,1);
+  lcd.print("(C) 2015-2016");
+  delay(3000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Enigma Ready");
+  lcd.setCursor(0,1);
+  lcd.print(">");
+  Serial.println("Enigma Ready");
+  Serial.print("Enter letter: ");
 }
 
 
-void loop() {
+void loop()
+{
   char c;
   int output, refout, rev;
   int keyboardindex;
@@ -133,33 +157,34 @@ void showInt(int c)
   if (c >= 1 && c <= 31) {
     /* initialize array */
  
-    for (i = 0; i <= 4; i++)
-      s[i]='0';
+  for (i = 0; i <= 4; i++)
+    s[i]='0';
  
-    /* Terminate char array properly to be printed
+  /* Terminate char array properly to be printed
       by Serial.println */
       
-    s[5]='\0';
+  s[5]='\0';
     
-    /* Convert to binary */
+  /* Convert to binary */
     
-    i=4;
-    while (c >= 1) {
-      if  (c % 2 == 1)
-        s[i--] = '1';
-      else
-        s[i--] = '0';
-      c = c / 2;
-    }
+  i=4;
+  while (c >= 1) {
+    if  (c % 2 == 1)
+      s[i--] = '1';
+    else
+      s[i--] = '0';
+    c = c / 2;
+  }
   
-    /* Display in LEDs 
-       Outputs to D2-D6 */
+  /* Display in LEDs 
+     Outputs to D2-D6 */
        
-    for (i = 2; i <= 6; i++)
-      if  (s[6-i] == '0')
-        digitalWrite(i, LOW);
-      else
-        digitalWrite(i, HIGH);
+  for (i = 2; i <= 6; i++)
+    if  (s[6-i] == '0')
+      digitalWrite(i, LOW);
+    else
+      digitalWrite(i, HIGH);
+
     Serial.print("Binary: ");  
     Serial.println(s);
     Serial.print("Letter: ");
@@ -168,75 +193,85 @@ void showInt(int c)
     Serial.println("Error!");
 }
 
-/* Rotate RotorIII by one position
+/* Rotate Rotor by one position
    Taking care of wrap arounds */
    
 void rotateRotor(int rotorno)
 {
-    int i;
-    int temp;
+  int i;
+  int temp;
     
-    /* Keep the top element */
+  /* Keep the top element */
 	
-	temp = rotor[rotorno][0];
+  temp = rotor[rotorno][0];
 	
-	/* Shift all elements one up */
+  /* Shift all elements one up */
 	
-    for (i=0; i<=24; i++)
-      rotor[rotorno][i] = rotor[rotorno][i+1];
+  for (i=0; i<=24; i++)
+    rotor[rotorno][i] = rotor[rotorno][i+1];
 	
-	/* Add the first element to the bottom */
+  /* Add the first element to the bottom */
 	    
-    rotor[rotorno][25] = temp;
+  rotor[rotorno][25] = temp;
 	
-	/* Reduce the values by 1
-	   Wrap around if necessary  */
+  /* Reduce the values by 1
+     Wrap around if necessary  */
 	
-	for (i=0; i<=25; i++) {
-		rotor[rotorno][i] = rotor[rotorno][i] - 1;
-		if (rotor[rotorno][i]< 0) 
-		  rotor[rotorno][i] = 25;
-	}    
-	if (++rotpos[rotorno]==26)
-	  rotpos[rotorno] = 0;
+  for (i=0; i<=25; i++) {
+    rotor[rotorno][i] = rotor[rotorno][i] - 1;
+    if (rotor[rotorno][i]< 0) 
+      rotor[rotorno][i] = 25;
+  }    
+
+  if (++rotpos[rotorno]==26)
+    rotpos[rotorno] = 0;
 }
 
-int encryptRotor(int keyboardindex, int rotorno) {
+int encryptRotor(int keyboardindex, int rotorno)
+{
+  /* If this is the rightmost rotor,
+     rotate before encrypting! */
 
-	/* If this is the rightmost rotor,
-	   rotate before encrypting! */
+  /* Rotate middle and left rotors too
+     Take care of the double stepping bug */
 	
-	if (rotorno==2)  {
-	  rotateRotor(rotorno);
-	  printf("Rotor 3 pos: %d\n", rotor[2][0]);
-	  if (rotpos[2] == notch[2])
-	  	 rotateRotor(1);
-	  }
+  if (rotorno==2)  {
+    rotateRotor(rotorno);
+    if (rotpos[1]==notch[1]-1) {
+      rotateRotor(1);
+      rotateRotor(0);
+      just_rotated = TRUE;
+    } else
+      just_rotated = FALSE;   
+      if (rotpos[2] == notch[2] && !just_rotated)  {
+        rotateRotor(1);
+      }
+  }
 	
-	/* return output position */
+  /* return output position */
 	
-	return rotor[rotorno][keyboardindex];
+  return rotor[rotorno][keyboardindex];
 }
 
 int validateLetter(char letter) 
 {
- if (letter >=97 && letter <= 122)
-   letter = letter - 97;
- else
-   letter = letter - 65;
+  if (letter >=97 && letter <= 122)
+    letter = letter - 97;
+  else
+    letter = letter - 65;
 	    
- if (letter <0 || letter >25) 
-   return 31;
- else
-   return letter;
+  if (letter <0 || letter >25) 
+    return 31;
+  else
+    return letter;
 }
 
 int reflect(int index) 
 {
-	if ( index>=0 && index <=25)
-	  return reflector[index];
-	else
-	  return 31;
+  if ( index>=0 && index <=25)
+    return reflector[index];
+  else
+    return 31;
 }
 
 /* Reverse encrypt letter from reflector 
@@ -248,12 +283,20 @@ int reverseEncryptRotor(int pos, int rotorno)
   int found=0;
   
   while (output <= 25 && found == 0) {
-  	if (rotor[rotorno][output] == pos) 
-  	   found = 1;
-  	else
-  	   output++;
+    if (rotor[rotorno][output] == pos) 
+      found = 1;
+    else
+      output++;
   }
   return output;
 }
 
+/* Initialize Rotor to position indicated by letter */
 
+void initRotorPos(char p, int rotorno)
+{
+  int i,j;
+  i = validateLetter(p);
+  for (j=1; j<=i; j++) 
+    rotateRotor(rotorno);
+}

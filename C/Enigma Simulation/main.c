@@ -1,7 +1,25 @@
 /* Enigma Simulation
    Debug platform for Arduino code
-   (C)2015-2016 Manolis Kiagias
-   Licensed under the BSD license */
+  (C)2015-2016 Manolis Kiagias
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,16 +69,18 @@ int reflector[] = { 24, 17, 20, 7, 16, 18, 11,
                     
 int main(int argc, char *argv[]) {
     int output,refout,rev;
-	char keyboard[]="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+	char keyboard[]="ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVW";
 	char result[128];
 	int i;
 	int keyboardindex; 
     
     /* Test the Enigma */
+
     initRotorPos('A',2);
     initRotorPos('C',1);
     initRotorPos('A',0);
-    printf("Initial rotor positions III-II-I: %d\t%d\t%d\n\n",rotpos[2],rotpos[1],rotpos[0]);
+
+    printf("Initial rotor positions III-II-I: %c-%c-%c\n\n",indexToLetter(rotpos[2]),indexToLetter(rotpos[1]),indexToLetter(rotpos[0]));
 	printf("Keyboard\tRotorIII out\tReflector out\tReverse III\tLetter\n");
     printf("========================================================================\n");
 	for (i=0; i<strlen(keyboard); i++) {
@@ -74,11 +94,17 @@ int main(int argc, char *argv[]) {
     	  rev = reverseEncryptRotor(rev, 1);
     	  rev = reverseEncryptRotor(rev,2);
     	  printf("%c\t\t%d\t\t%d\t\t%d\t\t\%c\n",keyboard[i],output,refout,rev,indexToLetter(rev));
-          result[i]=indexToLetter(rev);
+    	  if (i<=127)
+            result[i]=indexToLetter(rev);
 		} else
           printf("Invalid character!\n");
 	}
-	result[i]='\0';
+	
+	if (i<=127)
+	  result[i]='\0';
+	else
+	  result[127]='\0';
+	  
 	printf("\nResult: %s\n\n",result);
 	system("pause");
 	return 0;
@@ -123,32 +149,32 @@ void initRotorPos(char p, int rotorno) {
 
 /* Forward encrypt through RotorIII */
 
-int encryptRotor(int keyboardindex, int rotorno) {
+int encryptRotor(int keyboardindex, int rotorno) 
+{
+  /* If this is the rightmost rotor,
+     rotate before encrypting! */
 
-	/* If this is the rightmost rotor,
-	   rotate before encrypting! */
-
-    /* Rotate middle and left rotors too
-       Take care of the double stepping bug */
+  /* Rotate middle and left rotors too
+     Take care of the double stepping bug */
 	
-	if (rotorno==2)  {
-	  rotateRotor(rotorno);
-	  if (rotpos[1]==notch[1]-1) {
-		printf("DS\n");
-	  	rotateRotor(1);
-	  	rotateRotor(0);
-	  	just_rotated = TRUE;
-	  } else
-	    just_rotated = FALSE;
+  if (rotorno==2)  {
+    rotateRotor(rotorno);
+	if (rotpos[1]==notch[1]-1) {
+	  printf("\t\t\t\t\t\t\t\t\tDOUBLE STEPPING\n");
+	  rotateRotor(1);
+	  rotateRotor(0);
+	  just_rotated = TRUE;
+    } else
+	  just_rotated = FALSE;
 	    
-	  if (rotpos[2] == notch[2] && !just_rotated)  {
-	  	 rotateRotor(1);
-	  }
+	if (rotpos[2] == notch[2] && !just_rotated)  {
+	  rotateRotor(1);
 	}
+  }
 	
 	/* return output position */
 	
-	return rotor[rotorno][keyboardindex];
+  return rotor[rotorno][keyboardindex];
 }
 
 /* Convert ASCII A-Z (or a-z) to 0 - 25
@@ -173,10 +199,10 @@ int validateLetter(char letter)
 
 int reflect(int index) 
 {
-	if ( index >= 0 && index <= 25)
-	  return reflector[index];
-	else
-	  return 31;
+  if ( index >= 0 && index <= 25)
+    return reflector[index];
+  else
+    return 31;
 }
 
 /* Reverse encrypt through RotorIII
@@ -201,5 +227,5 @@ int reverseEncryptRotor(int pos, int rotorno)
 
 char indexToLetter(int index)
 {
-	return 65+index;
+  return 65+index;
 }

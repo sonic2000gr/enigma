@@ -698,8 +698,8 @@ def main():
     coord_rr = []
     cipher = []
     cleartext = []
-    plugs = {'A':'F', 'B':'X', 'C':'L', 'O':'R', 'M':'U','D':'Y','I':'K','E':'N',
-             'G':'H','S':'W'}
+    plugs = {'A':'A', 'B':'B', 'C':'C', 'O':'O', 'M':'M','D':'D','I':'I','E':'E',
+             'G':'G','S':'S'}
     board = PlugBoard(plugs)
     framerate = 50
     clock = pygame.time.Clock()

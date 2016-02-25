@@ -109,7 +109,7 @@ void setup()
 
 void loop()
 {
-  char c;
+  char c,d;
   int output, refout, rev;
   int keyboardindex;
   
@@ -117,18 +117,25 @@ void loop()
   
   if (Serial.available()) {
     c = Serial.read();
+    if (c == '!') {
+      // Not completed yet
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Machine Reset!");
+      delay(2000);
+      lcd.clear();
+    } else {
     Serial.println(c);
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print(">");
-    lcd.setCursor(1,0);
-    lcd.print(c);
-    lcd.setCursor(0,1);
-    lcd.print("Cipher: ");
-    lcd.setCursor(8,1); 
+   
     Serial.println("Results: ");
     keyboardindex = validateLetter(c);
     if (keyboardindex!=31) {
+      d = keyboardindex + 65;
+      lcd.setCursor(1,0);
+      lcd.print(d);
       output = encryptRotor(keyboardindex,2);
       output = encryptRotor(output,1);
       output = encryptRotor(output, 0);
@@ -137,13 +144,18 @@ void loop()
       rev = reverseEncryptRotor(rev, 1);
       rev = reverseEncryptRotor(rev,2);
       showInt(rev+1); 
+      lcd.setCursor(0,1);
+      lcd.print("Cipher: ");
+      lcd.setCursor(8,1); 
       lcd.print((char)(rev+65)); 
     } else {
       Serial.println("Invalid input!");
       lcd.print("Invalid!");
+      showInt(31);
     }
     Serial.print("Enter letter: ");
   }
+ }
 }
 
 /* Convert number to binary and

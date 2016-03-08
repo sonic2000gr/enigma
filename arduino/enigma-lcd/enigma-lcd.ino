@@ -118,12 +118,20 @@ void loop()
   if (Serial.available()) {
     c = Serial.read();
     if (c == '!') {
-      // Not completed yet
       lcd.clear();
+      
+      // Rotate rotors until position 0 is reached
+      for (int i=0; i<=2; i++)
+        while (rotpos[i]!=0)
+          rotateRotor(i);
+      lightsOff();
       lcd.setCursor(0,0);
       lcd.print("Machine Reset!");
-      delay(2000);
-      lcd.clear();
+      Serial.println("");
+      Serial.println("Machine Reset!");
+      Serial.print("Enter letter: ");
+      lcd.setCursor(0,1);
+      lcd.print(">");
     } else {
     Serial.println(c);
     lcd.clear();
@@ -203,6 +211,14 @@ void showInt(int c)
     Serial.println(letter);
   } else
     Serial.println("Error!");
+}
+
+// Turn off all LEDs
+
+void lightsOff()
+{
+  for (int i=2; i<=6; i++)
+    digitalWrite(i, LOW);
 }
 
 /* Rotate Rotor by one position

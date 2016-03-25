@@ -56,7 +56,7 @@ int reflectorPins[] = { 54, 55, 56, 57, 58, 59,
                         62, 63, 64, 65, 66, 67,
                         44, 46, 48, 50, 52, 53,
                         51, 49, 47, 45, 43, 41,
-                        26, 55 };
+                        31, 33 };
 
 // Stepper motor states
 // These will have to be multiplied by 32
@@ -96,7 +96,7 @@ int rotor[3][26] =  {
                        23, 20, 18, 15, 0, 8, 1, 17,
                        2, 9 },
 				 
-		     { 0, 9, 3, 10, 18, 8, 17, 20,
+            		     { 0, 9, 3, 10, 18, 8, 17, 20,
                        23, 1, 11, 7, 22, 19, 12, 2,
                        16, 6, 25, 13, 15, 24, 5, 21,
                        14, 4 },
@@ -146,11 +146,6 @@ void setup()
   initRotorPos('A',2);
   initRotorPos('A',1);
   initRotorPos('A',0);
- 
-  /* Initialize LED outputs */
- 
-  for (int i=2; i<=6; i++)
-    pinMode(i,OUTPUT);
  
   /* Show welcome message */
  
@@ -299,16 +294,7 @@ void showInt(int c)
       s[i--] = '0';
     c = c / 2;
   }
-  
-  /* Display in LEDs 
-     Outputs to D2-D6 */
-       
-  for (i = 2; i <= 6; i++)
-    if  (s[6-i] == '0')
-      digitalWrite(i, LOW);
-    else
-      digitalWrite(i, HIGH);
-
+ 
     Serial.print("Binary: ");  
     Serial.println(s);
     Serial.print("Letter: ");
@@ -362,17 +348,21 @@ int encryptRotor(int keyboardindex, int rotorno)
 	
   if (rotorno==2)  {
     motor3NextLetter();
+    motor3Stop();
     rotateRotor(rotorno);
     if (rotpos[1]==notch[1]-1) {
       rotateRotor(1);
       motor2NextLetter();
+      motor2Stop();
       rotateRotor(0);
       motor1NextLetter();
+      motor1Stop();
       just_rotated = TRUE;
     } else
       just_rotated = FALSE;   
       if (rotpos[2] == notch[2] && !just_rotated)  {
         motor2NextLetter();
+        motor2Stop();
         rotateRotor(1);
       }
   }

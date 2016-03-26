@@ -27,6 +27,10 @@
 #include <LiquidCrystal.h>
 #define TRUE 1
 #define FALSE 0
+#define EXTRAPULSES 1
+#define FULLROT 6
+#define STEPCOUNT 156
+#define MOTORDELAY 3
 
 // Right Rotor  DUE pins (A3, A2, A1, A0)
 
@@ -119,6 +123,16 @@ int reflector[] = { 24, 17, 20, 7, 16, 18, 11,
 int currentstate3 = 0;
 int currentstate2 = 0;
 int currentstate1 = 0;
+
+/* Letter count to correct for missing 14 pulses per full rotation */
+
+int stepmod3 = 0;
+int stepmod2 = 0;
+int stepmod1 = 0;
+int lettercount3 = 0;
+int lettercount2 = 0;
+int lettercount1 = 0;
+
 
 void setup()
 {
@@ -253,7 +267,8 @@ void loop()
       lcd.setCursor(0,1);
       lcd.print("Cipher: ");
       lcd.setCursor(8,1); 
-      lcd.print((char)(rev+65)); 
+      lcd.print((char)(rev+65));
+      delay(100);
     } else {
       Serial.println("Invalid input!");
       lcd.print("Invalid!");
@@ -430,26 +445,74 @@ void initRotorPos(char p, int rotorno)
 }
 
 void motor3NextLetter() {
-     for (int j=0; j<157; j++) {
+  
+      // Adjust for missing pulses on full rotation
+     
+     int stepcount;
+     if (stepmod3 == 1) {
+        stepcount = STEPCOUNT + EXTRAPULSES;
+        stepmod3 = 0;
+     } else {
+        stepmod3 = 1;
+        stepcount = STEPCOUNT;
+     }
+
+     if (++lettercount3 == 25) {
+       lettercount3 = 0;
+       stepcount += FULLROT;
+     }
+     
+     for (int j=0; j<stepcount; j++) {
        REG_PIOA_ODSR = states[currentstate3]; 
        if (++currentstate3 == 8) currentstate3 = 0;
-       delay(2);
+       delay(MOTORDELAY);
      }
 }
 
 void motor2NextLetter(){
-  for (int j=0; j<157; j++) {
+    // Adjust for missing pulses on full rotation
+     
+     int stepcount;
+     if (stepmod2 == 1) {
+        stepcount = STEPCOUNT + EXTRAPULSES;
+        stepmod2 = 0;
+     } else {
+        stepcount = STEPCOUNT;
+        stepmod2 = 1;
+     }
+
+     if (++lettercount2 == 25) {
+       lettercount2 = 0;
+       stepcount += FULLROT;
+     }
+
+
+  for (int j=0; j<stepcount; j++) {
     REG_PIOD_ODSR = states[currentstate2]; 
     if (++currentstate2 == 8) currentstate2 = 0;
-    delay(2);
+    delay(MOTORDELAY);
  } 
 }
 
 void motor1NextLetter(){
-  for (int j=0; j<157; j++) {
+     int stepcount;
+     if (stepmod1 == 1) {
+        stepcount = STEPCOUNT + EXTRAPULSES;
+        stepmod1 = 0;
+     } else {
+        stepcount = STEPCOUNT;
+        stepmod1 = 1;
+     }
+
+     if (++lettercount1 == 25) {
+       lettercount1 = 0;
+       stepcount += FULLROT;
+     }
+
+  for (int j=0; j<stepcount; j++) {
     REG_PIOC_ODSR = states[currentstate1]*32; 
     if (++currentstate1 == 8) currentstate1 = 0;
-    delay(2);
+    delay(MOTORDELAY);
   }
 }
 

@@ -62,6 +62,8 @@ int reflectorPins[] = { 54, 55, 56, 57, 58, 59,
                         51, 49, 47, 45, 43, 41,
                         31, 33 };
 
+int hashPin = 35;
+
 // Stepper motor states
 // These will have to be multiplied by 32
 // for the left Rotor since Port pins start with C5
@@ -201,6 +203,9 @@ void setup()
     delay(100);
     digitalWrite(reflectorPins[j], LOW);
   }
+  digitalWrite(hashPin, HIGH);
+  delay(100);
+  digitalWrite(hashPin, LOW);
   // lcd.clear();
   // lcd.print("Enter RotorA Pos");
   // lcd.setCursor(0,1);
@@ -233,18 +238,39 @@ void loop()
       
       // Rotate rotors until position 0 is reached
       lcd.setCursor(0,0);
+      reflectorOff();
       lcd.print("Resetting...");
-      for (int i=0; i<=2; i++)
+      for (int i=0; i<=2; i++) {
         while (rotpos[i]!=0) {
-          if (i==0)
-            motor1NextLetter();
-          if (i==1)
-            motor2NextLetter();
-          if (i==2)
-            motor3NextLetter();
-            
+          switch(i) {
+            case 0:
+              motor1NextLetter();
+              break;
+            case 1:
+              motor2NextLetter();
+              break;
+            case 2:
+              motor3NextLetter();
+              break;
+            default:
+              break;
+          } 
           rotateRotor(i);
         }
+        switch(i) {
+            case 0:
+              motor1Stop();
+              break;
+            case 1:
+              motor2Stop();
+              break;
+            case 2:
+              motor3Stop();
+              break;
+            default:
+              break;
+          } 
+      }
       lcd.setCursor(0,0);
       lcd.print("Machine Reset!");
       Serial.println("");
@@ -268,15 +294,17 @@ void loop()
       output = encryptRotor(output,1);
       output = encryptRotor(output, 0);
       refout = reflect(output);
+      delay(2000);
       rev = reverseEncryptRotor(refout,0);
       rev = reverseEncryptRotor(rev, 1);
       rev = reverseEncryptRotor(rev,2);
+      result(rev);
       showInt(rev+1); 
       lcd.setCursor(0,1);
       lcd.print("Cipher: ");
       lcd.setCursor(8,1); 
       lcd.print((char)(rev+65));
-      delay(100);
+      delay(1000);
     } else {
       Serial.println("Invalid input!");
       lcd.print("Invalid!");
@@ -420,9 +448,19 @@ int reflect(int index)
     return 31;
 }
 
+int result(int index)
+{
+   if (index>=0 && index<=25) {
+      reflectorOff();
+      digitalWrite(reflectorPins[index], HIGH);
+      digitalWrite(hashPin, HIGH);
+   }       
+}
+
 void reflectorOff() {
   for (int j=0; j<=25; j++)
      digitalWrite(reflectorPins[j], LOW);
+  digitalWrite(hashPin, LOW);
 }
 
 /* Reverse encrypt letter from reflector 
@@ -554,8 +592,9 @@ void initRotorPins() {
 }
 
 void initReflectorPins() {
-for (int j=0; j<=25; j++)
+  for (int j=0; j<=25; j++)
     pinMode(reflectorPins[j], OUTPUT);
+  pinMode(hashPin, OUTPUT);
 }
 
 void motor3Stop(){

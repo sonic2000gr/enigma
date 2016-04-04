@@ -232,11 +232,19 @@ void loop()
       lcd.clear();
       
       // Rotate rotors until position 0 is reached
-      
+      lcd.setCursor(0,0);
+      lcd.print("Resetting...");
       for (int i=0; i<=2; i++)
-        while (rotpos[i]!=0)
+        while (rotpos[i]!=0) {
+          if (i==0)
+            motor1NextLetter();
+          if (i==1)
+            motor2NextLetter();
+          if (i==2)
+            motor3NextLetter();
+            
           rotateRotor(i);
-      
+        }
       lcd.setCursor(0,0);
       lcd.print("Machine Reset!");
       Serial.println("");

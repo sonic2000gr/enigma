@@ -1,5 +1,5 @@
 /* The Enigma Due - Motor Control
-   Version 1.0 beta
+   Version 1.0
    With LCD, motors and reflector LED board support
    (C) 2015-2016 Manolis Kiagias
    The Enigma Project 
@@ -31,6 +31,7 @@
 #define FULLROT 6
 #define STEPCOUNT 156
 #define MOTORDELAY 3
+#define HASHPIN 35
 
 // Right Rotor  DUE pins (A3, A2, A1, A0)
 
@@ -61,8 +62,6 @@ int reflectorPins[] = { 54, 55, 56, 57, 58, 59,
                         44, 46, 48, 50, 52, 53,
                         51, 49, 47, 45, 43, 41,
                         31, 33 };
-
-int hashPin = 35;
 
 // Stepper motor states
 // These will have to be multiplied by 32
@@ -203,9 +202,9 @@ void setup()
     delay(100);
     digitalWrite(reflectorPins[j], LOW);
   }
-  digitalWrite(hashPin, HIGH);
+  digitalWrite(HASHPIN, HIGH);
   delay(100);
-  digitalWrite(hashPin, LOW);
+  digitalWrite(HASHPIN, LOW);
   // lcd.clear();
   // lcd.print("Enter RotorA Pos");
   // lcd.setCursor(0,1);
@@ -453,14 +452,14 @@ int result(int index)
    if (index>=0 && index<=25) {
       reflectorOff();
       digitalWrite(reflectorPins[index], HIGH);
-      digitalWrite(hashPin, HIGH);
+      digitalWrite(HASHPIN, HIGH);
    }       
 }
 
 void reflectorOff() {
   for (int j=0; j<=25; j++)
      digitalWrite(reflectorPins[j], LOW);
-  digitalWrite(hashPin, LOW);
+  digitalWrite(HASHPIN, LOW);
 }
 
 /* Reverse encrypt letter from reflector 
@@ -594,7 +593,7 @@ void initRotorPins() {
 void initReflectorPins() {
   for (int j=0; j<=25; j++)
     pinMode(reflectorPins[j], OUTPUT);
-  pinMode(hashPin, OUTPUT);
+  pinMode(HASHPIN, OUTPUT);
 }
 
 void motor3Stop(){
